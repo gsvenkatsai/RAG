@@ -1,0 +1,1 @@
+Machine learning is a field of AI that learns patterns from data.

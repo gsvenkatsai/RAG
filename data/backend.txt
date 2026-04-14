@@ -1,0 +1,1 @@
+Django is a backend framework used for web development.
