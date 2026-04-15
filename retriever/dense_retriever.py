@@ -1,6 +1,7 @@
 from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
+from retriever.bm25_retriever import setup_bm25
 # load model once (used to convert text into embeddings/vectors)
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -26,7 +27,7 @@ def setup_vector_db():
                 "source": file["source"],
                 "chunk_id": i
             })
-
+    setup_bm25(documents)
     embeddings = model.encode([doc["text"] for doc in documents])
 
     dimension = embeddings.shape[1]
@@ -55,12 +56,16 @@ def vector_db_search(query_embedding, k=5, threshold=1.5):
         return None, []
     results = results[:3]
     return results, scores
-def retrieve(query):
+
+def retrieve(query, k=5):
     query_embedding = model.encode([query])
 
-    docs, scores = vector_db_search(query_embedding)
+    docs, scores = vector_db_search(
+        query_embedding,
+        k=k
+    )
 
     if docs is None:
-        return None
+        return []
 
     return docs
