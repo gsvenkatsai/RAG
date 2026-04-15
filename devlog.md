@@ -601,3 +601,192 @@ def run_rag(query):
 - Evaluation → measures performance
 
 ---
+
+# 📘 Dev Log — RAG System (Subtopics 7–9)
+
+---
+
+# 🔹 Subtopic 7: Backend API Development
+
+## Changes
+
+### 1. FastAPI Integration
+
+```python
+from fastapi import FastAPI
+from pipeline import run_rag, init
+
+app = FastAPI()
+
+init()
+
+@app.get("/ask")
+def ask(query: str):
+    return run_rag(query)
+```
+
+**Why:** exposes RAG pipeline as an API service.
+
+---
+
+### 2. Response Optimization
+
+```python
+sources = [
+    {"source": c["source"], "chunk_id": c["chunk_id"]}
+    for c in context
+]
+```
+
+```python
+results = results[:3]
+```
+
+**Why:** reduces noise, improves latency, cleaner output.
+
+---
+
+### 3. Latency Tracking
+
+```python
+start = time.time()
+context = retrieve(query)
+retrieval_time = time.time() - start
+```
+
+**Why:** measure performance per request.
+
+---
+
+### 4. Error Handling
+
+```python
+if not context:
+    return {
+        "answer": "I don't know",
+        "sources": [],
+        "confidence": 0,
+        "latency": retrieval_time
+    }
+```
+
+**Why:** prevents crashes and enforces consistent responses.
+
+---
+
+# 🔹 Subtopic 8: Simple Frontend
+
+## Changes
+
+### 1. Streamlit UI
+
+```python
+import streamlit as st
+import requests
+
+st.title("RAG Q&A System")
+
+query = st.text_input("Enter your question:")
+
+if st.button("Ask"):
+    with st.spinner("Thinking..."):
+        response = requests.get(
+            "http://127.0.0.1:8000/ask",
+            params={"query": query}
+        )
+
+        data = response.json()
+
+        st.write("### Answer")
+        st.write(data["answer"])
+
+        st.write("### Confidence")
+        st.write(data["confidence"])
+
+        st.write("### Sources")
+        for s in data["sources"]:
+            st.write(f"{s['source']} (chunk {s['chunk_id']})")
+```
+
+**Why:** quick UI for interacting with API without frontend complexity.
+
+---
+
+### 2. Frontend–Backend Separation
+
+- Frontend → handles UI
+- Backend → handles logic/API
+
+**Why:** modular system, easier deployment and scaling.
+
+---
+
+# 🔹 Subtopic 9: Deployment
+
+## Changes
+
+### 1. Requirements Cleanup
+
+```text
+fastapi
+uvicorn
+sentence-transformers
+faiss-cpu
+numpy
+python-dotenv
+groq
+```
+
+**Why:** removed dependency conflicts, allowed successful build.
+
+---
+
+### 2. Backend Deployment (Render)
+
+- Build:
+
+```bash
+pip install -r requirements.txt
+```
+
+- Start:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+**Why:** makes API accessible over internet.
+
+---
+
+### 3. Environment Variables
+
+```text
+GROQ_API_KEY=...
+```
+
+**Why:** secure handling of secrets.
+
+---
+
+### 4. Frontend Deployment (optional)
+
+- Streamlit service:
+
+```bash
+streamlit run app.py --server.port 10000 --server.address 0.0.0.0
+```
+
+- API URL updated to deployed backend
+
+**Why:** connect UI to live backend.
+
+---
+
+## 🏁 Summary
+
+- Backend → API layer over RAG
+- Frontend → simple user interface
+- Deployment → public access system
+
+---
